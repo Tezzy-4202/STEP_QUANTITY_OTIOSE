@@ -84,4 +84,19 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("--- UC7: Explicit Target Unit Addition ---");
 
-        QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET
+        QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+        QuantityLength twelveInches = new QuantityLength(12.0, LengthUnit.INCH);
+
+        // 1. Add with result in Yards (0.667)
+        System.out.println("1ft + 12in (Target: YARDS) -> " + 
+                           QuantityLength.add(oneFoot, twelveInches, LengthUnit.YARDS));
+
+        // 2. Add with result in Centimeters
+        System.out.println("1ft + 12in (Target: CENTIMETERS) -> " + 
+                           QuantityLength.add(oneFoot, twelveInches, LengthUnit.CENTIMETERS));
+
+        // 3. Add with result in Inches (24.0)
+        System.out.println("1ft + 12in (Target: INCHES) -> " + 
+                           QuantityLength.add(oneFoot, twelveInches, LengthUnit.INCH));
+    }
+}
