@@ -1,27 +1,29 @@
 /**
- * QuantityMeasurementApp - UC4: Extended Unit Support
- * Demonstrates scalability by adding Yards and Centimeters via Enum modification.
+ * QuantityMeasurementApp - UC5: Unit-to-Unit Conversion
+ * This class provides explicit conversion between length units and 
+ * demonstrates Method Overloading and Encapsulation.
  */
 
 package com.apps.quantitymeasurement;
 
+import java.util.Objects;
+
 public class Main {
 
     public enum LengthUnit {
-        // Factors relative to 1.0 Inch
-        YARDS(36.0),         // 1 Yard = 3 Feet = 36 Inches
-        FEET(12.0),          // 1 Foot = 12 Inches
-        INCH(1.0),           // Base Unit
-        CENTIMETERS(0.393701); // 1 Centimeter = 0.393701 Inches
+        YARDS(36.0),
+        FEET(12.0),
+        INCH(1.0),
+        CENTIMETERS(0.393701);
 
-        private final double conversionFactor;
+        private final double factor;
 
-        LengthUnit(double conversionFactor) {
-            this.conversionFactor = conversionFactor;
+        LengthUnit(double factor) {
+            this.factor = factor;
         }
 
-        public double convertToBase(double value) {
-            return value * this.conversionFactor;
+        private double convertToBase(double value) {
+            return value * this.factor;
         }
     }
 
@@ -30,39 +32,80 @@ public class Main {
         private final LengthUnit unit;
 
         public QuantityLength(double value, LengthUnit unit) {
+            validate(value, unit);
             this.value = value;
             this.unit = unit;
+        }
+
+        /**
+         * Private helper to validate inputs during instantiation.
+         */
+        private static void validate(double value, LengthUnit unit) {
+            if (!Double.isFinite(value)) throw new IllegalArgumentException("Value must be finite.");
+            if (unit == null) throw new IllegalArgumentException("Unit cannot be null.");
+        }
+
+        /**
+         * Instance method: Converts current quantity to a new target unit.
+         * returns a new QuantityLength instance (Immutability).
+         */
+        public QuantityLength convertTo(LengthUnit targetUnit) {
+            double convertedValue = convert(this.value, this.unit, targetUnit);
+            return new QuantityLength(convertedValue, targetUnit);
+        }
+
+        /**
+         * Static API Method: Pure logic to convert between two units.
+         */
+        public static double convert(double value, LengthUnit source, LengthUnit target) {
+            if (source == target) return value;
+            double baseValue = source.convertToBase(value);
+            return baseValue / target.factor;
         }
 
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
             if (obj == null || getClass() != obj.getClass()) return false;
-
             QuantityLength that = (QuantityLength) obj;
+            return Math.abs(this.unit.convertToBase(this.value) - 
+                            that.unit.convertToBase(that.value)) < 1e-6;
+        }
 
-            // Convert both to the base unit (Inches) for cross-unit comparison
-            double firstValue = this.unit.convertToBase(this.value);
-            double secondValue = that.unit.convertToBase(that.value);
-
-            // Use a small epsilon for floating-point comparison with Centimeters
-            return Math.abs(firstValue - secondValue) < 1e-6;
+        @Override
+        public String toString() {
+            return String.format("%.2f %s", value, unit);
         }
     }
 
+    // --- API Demonstration Methods (Method Overloading) ---
+
+    /**
+     * Overload 1: Converts raw double values.
+     */
+    public static void demonstrateLengthConversion(double value, LengthUnit from, LengthUnit to) {
+        double result = QuantityLength.convert(value, from, to);
+        System.out.printf("Input: %.2f %s -> Output: %.4f %s%n", value, from, result, to);
+    }
+
+    /**
+     * Overload 2: Converts an existing QuantityLength object.
+     */
+    public static void demonstrateLengthConversion(QuantityLength length, LengthUnit to) {
+        QuantityLength result = length.convertTo(to);
+        System.out.println("Converted Object: " + result);
+    }
+
     public static void main(String[] args) {
-        // Yard to Feet comparison
-        QuantityLength oneYard = new QuantityLength(1.0, LengthUnit.YARDS);
-        QuantityLength threeFeet = new QuantityLength(3.0, LengthUnit.FEET);
-        System.out.println("1.0 Yard == 3.0 Feet: " + oneYard.equals(threeFeet));
+        System.out.println("--- UC5: Unit Conversion API ---");
+        
+        // Testing Static API
+        demonstrateLengthConversion(1.0, LengthUnit.FEET, LengthUnit.INCH);   // 12.0
+        demonstrateLengthConversion(3.0, LengthUnit.YARDS, LengthUnit.FEET); // 9.0
+        demonstrateLengthConversion(1.0, LengthUnit.CENTIMETERS, LengthUnit.INCH); 
 
-        // Yard to Inch comparison
-        QuantityLength thirtySixInches = new QuantityLength(36.0, LengthUnit.INCH);
-        System.out.println("1.0 Yard == 36.0 Inches: " + oneYard.equals(thirtySixInches));
-
-        // Centimeter to Inch comparison
-        QuantityLength oneCm = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
-        QuantityLength targetInch = new QuantityLength(0.393701, LengthUnit.INCH);
-        System.out.println("1.0 cm == 0.393701 inches: " + oneCm.equals(targetInch));
+        // Testing Instance Method
+        QuantityLength myLength = new QuantityLength(36.0, LengthUnit.INCH);
+        demonstrateLengthConversion(myLength, LengthUnit.YARDS); // 1.00 YARDS
     }
 }
