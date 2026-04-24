@@ -1,12 +1,9 @@
 /**
- * QuantityMeasurementApp - UC6: Addition of Two Length Units
- * Adds support for adding two quantities of different units, 
- * returning the result in the unit of the first operand.
+ * QuantityMeasurementApp - UC7: Addition with Target Unit Specification
+ * Demonstrates Method Overloading and explicit control over result units.
  */
 
 package com.apps.quantitymeasurement;
-
-import java.util.Objects;
 
 public class Main {
 
@@ -39,26 +36,34 @@ public class Main {
         }
 
         /**
-         * Instance Method: Adds another quantity to the current one.
-         * The result unit matches the current instance's unit.
+         * UC6: Implicit addition (Result in unit of 'this')
          */
         public QuantityLength add(QuantityLength other) {
             return add(this, other, this.unit);
         }
 
         /**
-         * Static API Method: Adds two quantities and returns a new one in the target unit.
+         * UC7: Explicit addition (Result in specified targetUnit)
+         * Overloaded to allow caller control.
          */
         public static QuantityLength add(QuantityLength l1, QuantityLength l2, LengthUnit targetUnit) {
-            if (l1 == null || l2 == null) throw new IllegalArgumentException("Operands cannot be null.");
-            
-            // 1. Normalize both to base (Inches)
+            if (l1 == null || l2 == null || targetUnit == null) {
+                throw new IllegalArgumentException("Operands and target unit cannot be null.");
+            }
+            return performAddition(l1, l2, targetUnit);
+        }
+
+        /**
+         * Private Utility Method: The engine for all addition logic.
+         * Centralizing this ensures consistent rounding and precision.
+         */
+        private static QuantityLength performAddition(QuantityLength l1, QuantityLength l2, LengthUnit target) {
+            // 1. Normalize to base
             double sumInBase = l1.unit.convertToBase(l1.value) + l2.unit.convertToBase(l2.value);
-            
-            // 2. Convert sum to target unit
-            double finalValue = sumInBase / targetUnit.factor;
-            
-            return new QuantityLength(finalValue, targetUnit);
+            // 2. Scale to target
+            double resultValue = sumInBase / target.factor;
+            // 3. Return new immutable instance
+            return new QuantityLength(resultValue, target);
         }
 
         @Override
@@ -72,26 +77,11 @@ public class Main {
 
         @Override
         public String toString() {
-            return String.format("%.2f %s", value, unit);
+            return String.format("%.3f %s", value, unit);
         }
     }
 
     public static void main(String[] args) {
-        System.out.println("--- UC6: Quantity Arithmetic ---");
+        System.out.println("--- UC7: Explicit Target Unit Addition ---");
 
-        // 1 Foot + 12 Inches = 2 Feet
-        QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
-        QuantityLength twelveInches = new QuantityLength(12.0, LengthUnit.INCH);
-        QuantityLength result1 = oneFoot.add(twelveInches);
-        System.out.println("1.0 FEET + 12.0 INCH = " + result1);
-
-        // 12 Inches + 1 Foot = 24 Inches
-        QuantityLength result2 = twelveInches.add(oneFoot);
-        System.out.println("12.0 INCH + 1.0 FEET = " + result2);
-
-        // 1 Yard + 3 Feet = 2 Yards (Logic: (36 + 36) / 36 = 2)
-        QuantityLength oneYard = new QuantityLength(1.0, LengthUnit.YARDS);
-        QuantityLength threeFeet = new QuantityLength(3.0, LengthUnit.FEET);
-        System.out.println("1.0 YARDS + 3.0 FEET = " + oneYard.add(threeFeet));
-    }
-}
+        QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET
